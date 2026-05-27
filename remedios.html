@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Remédios 💊</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f13;
+    --surface: #16181f;
+    --surface2: #1e2028;
+    --border: #2a2d38;
+    --accent: #5fe8a4;
+    --accent2: #4ecdc4;
+    --warn: #f7b731;
+    --danger: #ff6b6b;
+    --text: #e8eaf0;
+    --muted: #6b7080;
+    --done-bg: #1a2b22;
+    --done-border: #2d5040;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* Header */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 24px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .header-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .header-left p {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .progress-ring-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .progress-ring-wrap span {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .ring-container {
+    position: relative;
+    width: 52px;
+    height: 52px;
+  }
+
+  .ring-container svg {
+    transform: rotate(-90deg);
+  }
+
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 4; }
+  .ring-fg { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* Day tabs */
+  .tabs-wrap {
+    overflow-x: auto;
+    padding: 16px 24px 0;
+    scrollbar-width: none;
+  }
+  .tabs-wrap::-webkit-scrollbar { display: none; }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    width: max-content;
+  }
+
+  .tab {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+  }
+
+  .tab:hover { border-color: var(--accent); color: var(--accent); }
+
+  .tab.active {
+    background: var(--accent);
+    color: #0e0f13;
+    border-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .tab.done-tab { border-color: var(--done-border); color: var(--accent2); }
+  .tab.done-tab.active { background: var(--accent2); color: #0e0f13; border-color: var(--accent2); }
+
+  /* Content */
+  .content {
+    padding: 20px 24px 0;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .day-panel { display: none; }
+  .day-panel.active { display: block; }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .day-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+
+  .day-count {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Med card */
+  .med-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.25s;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .med-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 3px 0 0 3px;
+    transition: background 0.25s;
+  }
+
+  .med-card:hover { border-color: #3a3d4a; background: var(--surface2); }
+
+  .med-card.checked {
+    background: var(--done-bg);
+    border-color: var(--done-border);
+    opacity: 0.75;
+  }
+
+  .med-card.checked::before { background: var(--muted); }
+
+  .med-time {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--accent);
+    min-width: 48px;
+    transition: color 0.25s;
+    letter-spacing: 0.02em;
+  }
+
+  .med-card.checked .med-time { color: var(--muted); }
+
+  .med-name {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text);
+    transition: all 0.25s;
+  }
+
+  .med-card.checked .med-name {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .check-box {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s;
+    flex-shrink: 0;
+  }
+
+  .med-card.checked .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .check-icon {
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s;
+    font-size: 0.8rem;
+    color: #0e0f13;
+  }
+
+  .med-card.checked .check-icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Next up badge */
+  .next-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(95, 232, 164, 0.12);
+    border: 1px solid rgba(95, 232, 164, 0.3);
+    color: var(--accent);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  .pulse {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.5s infinite;
+    display: inline-block;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* Reset button */
+  .reset-btn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Confetti splash */
+  .day-done-msg {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    background: var(--done-bg);
+    border: 1px solid var(--done-border);
+    border-radius: 12px;
+    margin-top: 8px;
+  }
+
+  .day-done-msg .emoji { font-size: 2rem; }
+  .day-done-msg p { color: var(--accent); font-size: 0.85rem; margin-top: 8px; }
+
+  @media (max-width: 480px) {
+    header { padding: 20px 16px 16px; }
+    .tabs-wrap { padding: 12px 16px 0; }
+    .content { padding: 16px 16px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>💊 Remédios</h1>
+    <p>Controle de medicação</p>
+  </div>
+  <div class="progress-ring-wrap">
+    <div class="ring-container">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle class="ring-bg" cx="26" cy="26" r="22"/>
+        <circle class="ring-fg" id="globalRing" cx="26" cy="26" r="22"
+          stroke-dasharray="138.2"
+          stroke-dashoffset="138.2"/>
+      </svg>
+      <div class="ring-text" id="globalPct">0%</div>
+    </div>
+    <span>total</span>
+  </div>
+</header>
+
+<div class="tabs-wrap">
+  <div class="tabs" id="tabsContainer"></div>
+</div>
+
+<div class="content" id="content"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const days = [
+  {
+    label: "Hoje",
+    meds: [
+      { time: "16:00", name: "Amoxicilina + Clavulanato" },
+      { time: "21:00", name: "Prednisona" },
+      { time: "21:30", name: "Budesonida" },
+      { time: "22:00", name: "Ibuprofeno" },
+      { time: "23:30", name: "Loratadina" },
+    ]
+  },
+  {
+    label: "Dia 2",
+    meds: [
+      { time: "00:00", name: "Amoxicilina + Clavulanato" },
+      { time: "08:00", name: "Amoxicilina + Clavulanato" },
+      { time: "09:00", name: "Prednisona" },
+      { time: "09:30", name: "Budesonida" },
+      { time: "10:00", name: "Ibuprofeno" },
+      { time: "11:30", name: "Loratadina" },
+      { time: "16:00", name: "Amoxicilina + Clavulanato" },
+      { time: "21:00", name: "Prednisona" },
+      { time: "21:30", name: "Budesonida" },
+      { time: "22:00", name: "Ibuprofeno" },
+      { time: "23:30", name: "Loratadina" },
+    ]
+  },
+  {
+    label: "Dia 3",
+    meds: [
+      { time: "00:00", name: "Amoxicilina + Clavulanato" },
+      { time: "08:00", name: "Amoxicilina + Clavulanato" },
+      { time: "09:00", name: "Prednisona" },
+      { time: "09:30", name: "Budesonida" },
+      { time: "10:00", name: "Ibuprofeno" },
+      { time: "11:30", name: "Loratadina" },
+      { time: "16:00", name: "Amoxicilina + Clavulanato" },
+      { time: "21:00", name: "Prednisona" },
+      { time: "21:30", name: "Budesonida" },
+      { time: "22:00", name: "Ibuprofeno" },
+      { time: "23:30", name: "Loratadina" },
+    ]
+  },
+  {
+    label: "Dia 4",
+    meds: [
+      { time: "00:00", name: "Amoxicilina + Clavulanato" },
+      { time: "08:00", name: "Amoxicilina + Clavulanato" },
+      { time: "09:00", name: "Prednisona" },
+      { time: "09:30", name: "Budesonida" },
+      { time: "10:00", name: "Ibuprofeno" },
+      { time: "11:30", name: "Loratadina" },
+      { time: "16:00", name: "Amoxicilina + Clavulanato" },
+      { time: "21:00", name: "Prednisona" },
+      { time: "21:30", name: "Budesonida" },
+      { time: "22:00", name: "Ibuprofeno" },
+      { time: "23:30", name: "Loratadina" },
+    ]
+  },
+  {
+    label: "Dia 5",
+    meds: [
+      { time: "00:00", name: "Amoxicilina + Clavulanato" },
+      { time: "08:00", name: "Amoxicilina + Clavulanato" },
+      { time: "09:00", name: "Prednisona" },
+      { time: "09:30", name: "Budesonida" },
+      { time: "10:00", name: "Ibuprofeno" },
+      { time: "11:30", name: "Loratadina" },
+      { time: "16:00", name: "Amoxicilina + Clavulanato" },
+      { time: "21:00", name: "Prednisona" },
+      { time: "21:30", name: "Budesonida" },
+      { time: "22:00", name: "Ibuprofeno" },
+      { time: "23:30", name: "Loratadina" },
+    ]
+  },
+  {
+    label: "Dia 6",
+    meds: [
+      { time: "00:00", name: "Amoxicilina + Clavulanato" },
+      { time: "08:00", name: "Amoxicilina + Clavulanato" },
+      { time: "09:30", name: "Budesonida" },
+      { time: "16:00", name: "Amoxicilina + Clavulanato" },
+      { time: "21:30", name: "Budesonida" },
+    ]
+  },
+  {
+    label: "Dia 7",
+    meds: [
+      { time: "00:00", name: "Amoxicilina + Clavulanato" },
+      { time: "08:00", name: "Amoxicilina + Clavulanato" },
+      { time: "09:30", name: "Budesonida" },
+      { time: "16:00", name: "Amoxicilina + Clavulanato" },
+      { time: "21:30", name: "Budesonida" },
+    ]
+  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'remedios_v1';
+let state = {};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) state = JSON.parse(saved);
+  } catch(e) {}
+  // Ensure structure
+  days.forEach((d, di) => {
+    if (!state[di]) state[di] = {};
+    d.meds.forEach((_, mi) => {
+      if (state[di][mi] === undefined) state[di][mi] = false;
+    });
+  });
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ── CURRENT TIME ──────────────────────────────────────────────────────────────
+function getCurrentTimeStr() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+function findNextMed(dayIdx) {
+  const now = getCurrentTimeStr();
+  for (let i = 0; i < days[dayIdx].meds.length; i++) {
+    if (!state[dayIdx][i] && days[dayIdx].meds[i].time >= now) return i;
+  }
+  return -1;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+let activeDay = 0;
+
+function renderTabs() {
+  const container = document.getElementById('tabsContainer');
+  container.innerHTML = '';
+  days.forEach((d, di) => {
+    const allDone = days[di].meds.every((_, mi) => state[di][mi]);
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (allDone ? ' done-tab' : '') + (di === activeDay ? ' active' : '');
+    btn.textContent = allDone ? '✓ ' + d.label : d.label;
+    btn.onclick = () => { activeDay = di; render(); };
+    container.appendChild(btn);
+  });
+}
+
+function renderContent() {
+  const container = document.getElementById('content');
+  container.innerHTML = '';
+
+  days.forEach((d, di) => {
+    const panel = document.createElement('div');
+    panel.className = 'day-panel' + (di === activeDay ? ' active' : '');
+
+    const doneCount = d.meds.filter((_, mi) => state[di][mi]).length;
+    const total = d.meds.length;
+    const nextIdx = findNextMed(di);
+
+    panel.innerHTML = `
+      <div class="day-header">
+        <div class="day-title">${d.label}</div>
+        <div class="day-count">${doneCount}/${total} tomados</div>
+      </div>
+    `;
+
+    d.meds.forEach((med, mi) => {
+      const isDone = state[di][mi];
+      const isNext = (mi === nextIdx && di === activeDay);
+      const card = document.createElement('div');
+      card.className = 'med-card' + (isDone ? ' checked' : '');
+      card.innerHTML = `
+        <div class="med-time">${med.time}</div>
+        <div class="med-name">${med.name}${isNext ? '<span class="next-badge"><span class="pulse"></span>próximo</span>' : ''}</div>
+        <div class="check-box"><span class="check-icon">✓</span></div>
+      `;
+      card.onclick = () => {
+        state[di][mi] = !state[di][mi];
+        saveState();
+        render();
+      };
+      panel.appendChild(card);
+    });
+
+    // All done message
+    if (doneCount === total) {
+      const msg = document.createElement('div');
+      msg.className = 'day-done-msg';
+      msg.style.display = 'block';
+      msg.innerHTML = `<div class="emoji">🎉</div><p>Todos os remédios do ${d.label} tomados!</p>`;
+      panel.appendChild(msg);
+    }
+
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = '↺ Resetar dia';
+    resetBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (confirm('Resetar todos os checks do ' + d.label + '?')) {
+        d.meds.forEach((_, mi) => { state[di][mi] = false; });
+        saveState();
+        render();
+      }
+    };
+    panel.appendChild(resetBtn);
+
+    container.appendChild(panel);
+  });
+}
+
+function renderGlobalProgress() {
+  let total = 0, done = 0;
+  days.forEach((d, di) => {
+    total += d.meds.length;
+    done += d.meds.filter((_, mi) => state[di][mi]).length;
+  });
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const circumference = 138.2;
+  const offset = circumference - (pct / 100) * circumference;
+  document.getElementById('globalRing').style.strokeDashoffset = offset;
+  document.getElementById('globalPct').textContent = pct + '%';
+}
+
+function render() {
+  renderTabs();
+  renderContent();
+  renderGlobalProgress();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadState();
+render();
+</script>
+</body>
+</html>
